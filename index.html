@@ -30,30 +30,37 @@
   <p id="mensaje"></p>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxhNHLjbgjpO1IDDCUCBwpKQT3C0RJ2TkY1YM5QraFesQ55EzICHY8Xc0rMqBdqbI8Zmg/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwO-d3ddkVcELL0eb86QRXpvGz1bjxwleBS-wD2JOZK1OGCoboVS11MpJfymUmPvR6rwA/exec";
 
- const diasJulio = [
-  { texto: "Lunes 21/07", valor: "Lunes 21/07" },
-  { texto: "Martes 22/07", valor: "Martes 22/07" },
-  { texto: "Miércoles 23/07", valor: "Miércoles 23/07" },
-  { texto: "Jueves 24/07", valor: "Jueves 24/07" },
-  { texto: "Viernes 25/07", valor: "Viernes 25/07" },
-  { texto: "Sábado 26/07", valor: "Sábado 26/07" },
-  { texto: "Lunes 28/07", valor: "Lunes 28/07" },
-  { texto: "Martes 29/07", valor: "Martes 29/07" },
-  { texto: "Miércoles 30/07", valor: "Miércoles 30/07" },
-  { texto: "Jueves 31/07", valor: "Jueves 31/07" }
-];
+    const horaInicioSemana = 6;
+    const horaFinSemana = 20;
+    const horaInicioSabado = 8;
+    const horaFinSabado = 16;
 
+    const diasJulio = [
+      "2025-07-21", "2025-07-22", "2025-07-23", "2025-07-24", "2025-07-25",
+      "2025-07-26", "2025-07-28", "2025-07-29", "2025-07-30", "2025-07-31"
+    ];
 
-    const horasPorDia = {
-      "Lunes": generarHoras(6, 20),
-      "Martes": generarHoras(6, 20),
-      "Miércoles": generarHoras(6, 20),
-      "Jueves": generarHoras(6, 20),
-      "Viernes": generarHoras(6, 20),
-      "Sábado": generarHoras(8, 16)
-    };
+    const diasAgosto = Array.from({ length: 31 }, (_, i) => {
+      const d = new Date(2025, 7, i + 1); // agosto es mes 7 (0 index)
+      return d.toISOString().split("T")[0];
+    });
+
+    const diaSelect = document.getElementById("diaSelect");
+    const horaSelect = document.getElementById("horaSelect");
+    const mensaje = document.getElementById("mensaje");
+    const form = document.getElementById("turnoForm");
+    let turnosOcupados = [];
+
+    function formatearDia(fechaISO) {
+      const fecha = new Date(fechaISO);
+      const dias = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+      const diaSemana = dias[fecha.getDay()];
+      const dia = fecha.getDate().toString().padStart(2, "0");
+      const mes = (fecha.getMonth() + 1).toString().padStart(2, "0");
+      return `${diaSemana} ${dia}/${mes}`;
+    }
 
     function generarHoras(inicio, fin) {
       const lista = [];
@@ -64,42 +71,48 @@
       return lista;
     }
 
-    const diaSelect = document.getElementById("diaSelect");
-    const horaSelect = document.getElementById("horaSelect");
-    const mensaje = document.getElementById("mensaje");
-    const form = document.getElementById("turnoForm");
-
-    let turnosOcupados = [];
-
     async function cargarOcupados() {
       try {
         const res = await fetch(SCRIPT_URL);
         turnosOcupados = await res.json();
-        mostrarDias();
+        cargarDias();
       } catch (err) {
         mensaje.textContent = "❌ Error al cargar turnos disponibles";
         mensaje.className = "turno-error";
       }
     }
 
-    function mostrarDias() {
+    function cargarDias() {
       diaSelect.innerHTML = "";
-      diasJulio.forEach(d => {
+      const hoy = new Date();
+      const diasActivos = hoy.getMonth() === 6 ? diasJulio : diasAgosto;
+
+      diasActivos.forEach(fechaISO => {
+        const texto = formatearDia(fechaISO);
         const opt = document.createElement("option");
-        opt.value = opt.text = d.valor;
+        opt.value = texto;
+        opt.text = texto;
         diaSelect.appendChild(opt);
       });
+
       diaSelect.dispatchEvent(new Event("change"));
     }
 
     diaSelect.addEventListener("change", () => {
       const diaTexto = diaSelect.value;
-      const diaNombre = diaTexto.split(" ")[0];
-      const disponibles = horasPorDia[diaNombre] || [];
-      const ocupados = turnosOcupados.filter(t => t.dia === diaTexto).map(t => t.hora);
+      const nombreDia = diaTexto.split(" ")[0];
 
+      let horas = [];
+      if (nombreDia === "Sábado") {
+        horas = generarHoras(horaInicioSabado, horaFinSabado);
+      } else if (["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"].includes(nombreDia)) {
+        horas = generarHoras(horaInicioSemana, horaFinSemana);
+      }
+
+      const ocupados = turnosOcupados.filter(t => t.dia === diaTexto).map(t => t.hora);
       horaSelect.innerHTML = "";
-      disponibles.forEach(h => {
+
+      horas.forEach(h => {
         if (!ocupados.includes(h)) {
           const opt = document.createElement("option");
           opt.value = opt.text = h;
@@ -137,7 +150,7 @@
         } else if (text === "DUPLICADO") {
           mensaje.textContent = "❌ Ese turno ya fue reservado";
           mensaje.className = "turno-error";
-          await cargarOcupados(); // recarga turnos ocupados
+          await cargarOcupados();
         } else {
           mensaje.textContent = "⚠️ Ocurrió un error inesperado";
           mensaje.className = "turno-error";
@@ -147,6 +160,11 @@
         mensaje.className = "turno-error";
       }
     });
+
+    cargarOcupados();
+  </script>
+</body>
+</html>
 
     cargarOcupados();
   </script>
