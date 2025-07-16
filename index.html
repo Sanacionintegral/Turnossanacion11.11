@@ -6,18 +6,15 @@
   <title>Turnos Sanación 11.11</title>
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #f9f6f9;
+      font-family: sans-serif;
+      background: #f3f3f3;
       text-align: center;
       padding: 20px;
     }
-    h1 {
-      color: #7b2cbf;
-    }
     form {
       background: white;
-      border-radius: 10px;
       padding: 20px;
+      border-radius: 10px;
       max-width: 400px;
       margin: auto;
       box-shadow: 0 0 10px #ccc;
@@ -26,14 +23,13 @@
       width: 100%;
       padding: 10px;
       margin-top: 10px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
       font-size: 16px;
     }
     button {
       background-color: #7b2cbf;
       color: white;
       font-weight: bold;
+      border: none;
       cursor: pointer;
     }
     #mensaje {
@@ -49,10 +45,10 @@
   <form id="turnoForm">
     <input type="text" name="nombre" placeholder="Tu nombre" required />
     <input type="text" name="celular" placeholder="Tu celular" required />
-    
+
     <select name="dia" id="diaSelect" required></select>
     <select name="hora" id="horaSelect" required></select>
-    
+
     <button type="submit">Reservar Turno</button>
   </form>
   <p id="mensaje"></p>
@@ -63,14 +59,28 @@
     const horaSelect = document.getElementById("horaSelect");
     const mensaje = document.getElementById("mensaje");
 
-    const dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
-    const horas = {
+    const diasJulio = [
+      { texto: "Domingo 21/07", valor: "Domingo 21/07" },
+      { texto: "Lunes 22/07", valor: "Lunes 22/07" },
+      { texto: "Martes 23/07", valor: "Martes 23/07" },
+      { texto: "Miércoles 24/07", valor: "Miércoles 24/07" },
+      { texto: "Jueves 25/07", valor: "Jueves 25/07" },
+      { texto: "Viernes 26/07", valor: "Viernes 26/07" },
+      { texto: "Sábado 27/07", valor: "Sábado 27/07" },
+      { texto: "Domingo 28/07", valor: "Domingo 28/07" },
+      { texto: "Lunes 29/07", valor: "Lunes 29/07" },
+      { texto: "Martes 30/07", valor: "Martes 30/07" },
+      { texto: "Miércoles 31/07", valor: "Miércoles 31/07" },
+    ];
+
+    const horasPorDia = {
       "Lunes": generarHoras(6, 20),
       "Martes": generarHoras(6, 20),
       "Miércoles": generarHoras(6, 20),
       "Jueves": generarHoras(6, 20),
       "Viernes": generarHoras(6, 20),
       "Sábado": generarHoras(8, 16),
+      "Domingo": [],
     };
 
     function generarHoras(inicio, fin) {
@@ -82,20 +92,24 @@
       return lista;
     }
 
-    dias.forEach(dia => {
+    diasJulio.forEach(obj => {
       const opt = document.createElement("option");
-      opt.value = opt.text = dia;
+      opt.value = obj.valor;
+      opt.text = obj.texto;
       diaSelect.appendChild(opt);
     });
 
     diaSelect.addEventListener("change", () => {
-      const dia = diaSelect.value;
+      const diaTexto = diaSelect.value;
+      const diaNombre = diaTexto.split(" ")[0]; // "Lunes", "Martes", etc.
       horaSelect.innerHTML = "";
-      horas[dia].forEach(h => {
-        const opt = document.createElement("option");
-        opt.value = opt.text = h;
-        horaSelect.appendChild(opt);
-      });
+      if (horasPorDia[diaNombre]) {
+        horasPorDia[diaNombre].forEach(h => {
+          const opt = document.createElement("option");
+          opt.value = opt.text = h;
+          horaSelect.appendChild(opt);
+        });
+      }
     });
 
     diaSelect.dispatchEvent(new Event("change"));
@@ -103,6 +117,8 @@
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       const data = Object.fromEntries(new FormData(form).entries());
+      const dia = data.dia;
+      const hora = data.hora;
 
       const res = await fetch(
         "https://script.google.com/macros/s/AKfycbzFIBDlqY56C67jke37PR2Fzwa2Gpr-Ajzgitx7zvlM-gXAKRDmhhLszvOygSRMbBtyKw/exec",
@@ -116,8 +132,13 @@
       if (text === "OK") {
         mensaje.textContent = "✅ Turno reservado con éxito";
         mensaje.className = "turno-ok";
-        form.reset();
-        diaSelect.dispatchEvent(new Event("change"));
+
+        // Redirección a WhatsApp
+        const celular = "542235931151";
+        const mensajeWA = encodeURIComponent(
+          `Hola! Ya reservé mi turno para el ${dia} a las ${hora}.`
+        );
+        window.location.href = `https://wa.me/${celular}?text=${mensajeWA}`;
       } else if (text === "DUPLICADO") {
         mensaje.textContent = "❌ Ese turno ya fue reservado";
         mensaje.className = "turno-error";
