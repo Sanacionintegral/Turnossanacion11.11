@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Turnos Sanación 11.11</title>
   <style>
     body { font-family: sans-serif; background: #f3f3f3; padding: 20px; text-align: center; }
@@ -17,28 +17,34 @@
 <body>
   <h1>Reservá tu Turno</h1>
   <form id="turnoForm">
-    <input type="text" name="nombre" placeholder="Tu nombre" required>
-    <input type="text" name="celular" placeholder="Tu celular" required>
-    <select name="dia" id="diaSelect" required></select>
-    <select name="hora" id="horaSelect" required></select>
+    <input type="text" name="nombre" placeholder="Tu nombre" required />
+    <input type="text" name="celular" placeholder="Tu celular" required />
+    <select name="dia" id="diaSelect" required>
+      <option value="">Cargando días...</option>
+    </select>
+    <select name="hora" id="horaSelect" required>
+      <option value="">Seleccioná un día primero</option>
+    </select>
     <button type="submit">Reservar Turno</button>
   </form>
   <p id="mensaje"></p>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwkn3vVLZX1gfSqIwX_ZdLjlSiyYqB813-F_mKgwdPs8nlSEQz91m9j5WypEr_AY6KbUg/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxhNHLjbgjpO1IDDCUCBwpKQT3C0RJ2TkY1YM5QraFesQ55EzICHY8Xc0rMqBdqbI8Zmg/exec";
 
-    const diasJulio = [
-      { texto: "Lunes 21/07", valor: "Lunes 21/07" },
-      { texto: "Martes 22/07", valor: "Martes 22/07" },
-      { texto: "Miércoles 23/07", valor: "Miércoles 23/07" },
-      { texto: "Jueves 24/07", valor: "Jueves 24/07" },
-      { texto: "Viernes 25/07", valor: "Viernes 25/07" },
-      { texto: "Sábado 26/07", valor: "Sábado 26/07" },
-      { texto: "Lunes 28/07", valor: "Lunes 28/07" },
-      { texto: "Martes 29/07", valor: "Martes 29/07" },
-      { texto: "Miércoles 30/07", valor: "Miércoles 30/07" }
-    ];
+ const diasJulio = [
+  { texto: "Lunes 21/07", valor: "Lunes 21/07" },
+  { texto: "Martes 22/07", valor: "Martes 22/07" },
+  { texto: "Miércoles 23/07", valor: "Miércoles 23/07" },
+  { texto: "Jueves 24/07", valor: "Jueves 24/07" },
+  { texto: "Viernes 25/07", valor: "Viernes 25/07" },
+  { texto: "Sábado 26/07", valor: "Sábado 26/07" },
+  { texto: "Lunes 28/07", valor: "Lunes 28/07" },
+  { texto: "Martes 29/07", valor: "Martes 29/07" },
+  { texto: "Miércoles 30/07", valor: "Miércoles 30/07" },
+  { texto: "Jueves 31/07", valor: "Jueves 31/07" }
+];
+
 
     const horasPorDia = {
       "Lunes": generarHoras(6, 20),
@@ -66,12 +72,17 @@
     let turnosOcupados = [];
 
     async function cargarOcupados() {
-      const res = await fetch(SCRIPT_URL);
-      turnosOcupados = await res.json();
-      actualizarDias();
+      try {
+        const res = await fetch(SCRIPT_URL);
+        turnosOcupados = await res.json();
+        mostrarDias();
+      } catch (err) {
+        mensaje.textContent = "❌ Error al cargar turnos disponibles";
+        mensaje.className = "turno-error";
+      }
     }
 
-    function actualizarDias() {
+    function mostrarDias() {
       diaSelect.innerHTML = "";
       diasJulio.forEach(d => {
         const opt = document.createElement("option");
@@ -110,24 +121,29 @@
       const dia = data.dia;
       const hora = data.hora;
 
-      const res = await fetch(SCRIPT_URL, {
-        method: "POST",
-        body: JSON.stringify(data),
-      });
+      try {
+        const res = await fetch(SCRIPT_URL, {
+          method: "POST",
+          body: JSON.stringify(data),
+        });
 
-      const text = await res.text();
-      if (text === "OK") {
-        mensaje.textContent = "✅ Turno reservado con éxito";
-        mensaje.className = "turno-ok";
-        const celular = "542235931151";
-        const mensajeWA = encodeURIComponent(`Hola! Ya reservé mi turno para el ${dia} a las ${hora}.`);
-        window.location.href = `https://wa.me/${celular}?text=${mensajeWA}`;
-      } else if (text === "DUPLICADO") {
-        mensaje.textContent = "❌ Ese turno ya fue reservado";
-        mensaje.className = "turno-error";
-        await cargarOcupados(); // Actualiza
-      } else {
-        mensaje.textContent = "⚠️ Ocurrió un error inesperado";
+        const text = await res.text();
+        if (text === "OK") {
+          mensaje.textContent = "✅ Turno reservado con éxito";
+          mensaje.className = "turno-ok";
+          const celular = "542235931151";
+          const mensajeWA = encodeURIComponent(`Hola! Ya reservé mi turno para el ${dia} a las ${hora}.`);
+          window.location.href = `https://wa.me/${celular}?text=${mensajeWA}`;
+        } else if (text === "DUPLICADO") {
+          mensaje.textContent = "❌ Ese turno ya fue reservado";
+          mensaje.className = "turno-error";
+          await cargarOcupados(); // recarga turnos ocupados
+        } else {
+          mensaje.textContent = "⚠️ Ocurrió un error inesperado";
+          mensaje.className = "turno-error";
+        }
+      } catch (error) {
+        mensaje.textContent = "❌ Error de red al enviar";
         mensaje.className = "turno-error";
       }
     });
@@ -136,3 +152,4 @@
   </script>
 </body>
 </html>
+
