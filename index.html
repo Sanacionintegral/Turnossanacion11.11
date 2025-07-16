@@ -30,20 +30,20 @@
   <p id="mensaje"></p>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwO-d3ddkVcELL0eb86QRXpvGz1bjxwleBS-wD2JOZK1OGCoboVS11MpJfymUmPvR6rwA/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzZeXQM78z7a4cenxfjBNEJKf6djUk3D04sANY3HEcn3Ve1hgpA6ZX9y1rXo043uFl-lw/exec";
 
     const horaInicioSemana = 6;
     const horaFinSemana = 20;
     const horaInicioSabado = 8;
     const horaFinSabado = 16;
 
-    const diasJulio = [
+    const fechasJulio = [
       "2025-07-21", "2025-07-22", "2025-07-23", "2025-07-24", "2025-07-25",
       "2025-07-26", "2025-07-28", "2025-07-29", "2025-07-30", "2025-07-31"
     ];
 
-    const diasAgosto = Array.from({ length: 31 }, (_, i) => {
-      const d = new Date(2025, 7, i + 1); // agosto es mes 7 (0 index)
+    const fechasAgosto = Array.from({ length: 31 }, (_, i) => {
+      const d = new Date(2025, 7, i + 1); // Agosto (mes 7)
       return d.toISOString().split("T")[0];
     });
 
@@ -85,9 +85,9 @@
     function cargarDias() {
       diaSelect.innerHTML = "";
       const hoy = new Date();
-      const diasActivos = hoy.getMonth() === 6 ? diasJulio : diasAgosto;
+      const fechasTotales = [...fechasJulio, ...fechasAgosto];
 
-      diasActivos.forEach(fechaISO => {
+      fechasTotales.forEach(fechaISO => {
         const texto = formatearDia(fechaISO);
         const opt = document.createElement("option");
         opt.value = texto;
@@ -150,7 +150,7 @@
         } else if (text === "DUPLICADO") {
           mensaje.textContent = "❌ Ese turno ya fue reservado";
           mensaje.className = "turno-error";
-          await cargarOcupados();
+          await cargarOcupados(); // recarga
         } else {
           mensaje.textContent = "⚠️ Ocurrió un error inesperado";
           mensaje.className = "turno-error";
@@ -165,9 +165,3 @@
   </script>
 </body>
 </html>
-
-    cargarOcupados();
-  </script>
-</body>
-</html>
-
