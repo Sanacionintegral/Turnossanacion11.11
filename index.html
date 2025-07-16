@@ -26,18 +26,18 @@
   <p id="mensaje"></p>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzFIBDlqY56C67jke37PR2Fzwa2Gpr-Ajzgitx7zvlM-gXAKRDmhhLszvOygSRMbBtyKw/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwkn3vVLZX1gfSqIwX_ZdLjlSiyYqB813-F_mKgwdPs8nlSEQz91m9j5WypEr_AY6KbUg/exec";
 
     const diasJulio = [
-      { texto: "Lunes 22/07", valor: "Lunes 22/07" },
-      { texto: "Martes 23/07", valor: "Martes 23/07" },
-      { texto: "Miércoles 24/07", valor: "Miércoles 24/07" },
-      { texto: "Jueves 25/07", valor: "Jueves 25/07" },
-      { texto: "Viernes 26/07", valor: "Viernes 26/07" },
-      { texto: "Sábado 27/07", valor: "Sábado 27/07" },
-      { texto: "Lunes 29/07", valor: "Lunes 29/07" },
-      { texto: "Martes 30/07", valor: "Martes 30/07" },
-      { texto: "Miércoles 31/07", valor: "Miércoles 31/07" },
+      { texto: "Lunes 21/07", valor: "Lunes 21/07" },
+      { texto: "Martes 22/07", valor: "Martes 22/07" },
+      { texto: "Miércoles 23/07", valor: "Miércoles 23/07" },
+      { texto: "Jueves 24/07", valor: "Jueves 24/07" },
+      { texto: "Viernes 25/07", valor: "Viernes 25/07" },
+      { texto: "Sábado 26/07", valor: "Sábado 26/07" },
+      { texto: "Lunes 28/07", valor: "Lunes 28/07" },
+      { texto: "Martes 29/07", valor: "Martes 29/07" },
+      { texto: "Miércoles 30/07", valor: "Miércoles 30/07" }
     ];
 
     const horasPorDia = {
@@ -46,7 +46,7 @@
       "Miércoles": generarHoras(6, 20),
       "Jueves": generarHoras(6, 20),
       "Viernes": generarHoras(6, 20),
-      "Sábado": generarHoras(8, 16),
+      "Sábado": generarHoras(8, 16)
     };
 
     function generarHoras(inicio, fin) {
@@ -125,7 +125,7 @@
       } else if (text === "DUPLICADO") {
         mensaje.textContent = "❌ Ese turno ya fue reservado";
         mensaje.className = "turno-error";
-        await cargarOcupados(); // volver a cargar turnos
+        await cargarOcupados(); // Actualiza
       } else {
         mensaje.textContent = "⚠️ Ocurrió un error inesperado";
         mensaje.className = "turno-error";
