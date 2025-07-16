@@ -30,7 +30,7 @@
   <p id="mensaje"></p>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzZeXQM78z7a4cenxfjBNEJKf6djUk3D04sANY3HEcn3Ve1hgpA6ZX9y1rXo043uFl-lw/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxrU5d5V8pJ4j_5ekuYpwPhhdG_vj9rtDdkE-en24nje2oIDpjm2wjPGATCkMEQmejpnw/exec";
 
     const horaInicioSemana = 6;
     const horaFinSemana = 20;
@@ -84,7 +84,6 @@
 
     function cargarDias() {
       diaSelect.innerHTML = "";
-      const hoy = new Date();
       const fechasTotales = [...fechasJulio, ...fechasAgosto];
 
       fechasTotales.forEach(fechaISO => {
