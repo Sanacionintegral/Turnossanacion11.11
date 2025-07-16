@@ -1,41 +1,15 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Turnos Sanación 11.11</title>
   <style>
-    body {
-      font-family: sans-serif;
-      background: #f3f3f3;
-      text-align: center;
-      padding: 20px;
-    }
-    form {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      max-width: 400px;
-      margin: auto;
-      box-shadow: 0 0 10px #ccc;
-    }
-    input, select, button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      font-size: 16px;
-    }
-    button {
-      background-color: #7b2cbf;
-      color: white;
-      font-weight: bold;
-      border: none;
-      cursor: pointer;
-    }
-    #mensaje {
-      margin-top: 20px;
-      font-weight: bold;
-    }
+    body { font-family: sans-serif; background: #f3f3f3; padding: 20px; text-align: center; }
+    form { background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px #ccc; max-width: 400px; margin: auto; }
+    input, select, button { width: 100%; padding: 10px; margin-top: 10px; font-size: 16px; }
+    button { background-color: #7b2cbf; color: white; font-weight: bold; border: none; cursor: pointer; }
+    #mensaje { margin-top: 20px; font-weight: bold; }
     .turno-ok { color: green; }
     .turno-error { color: red; }
   </style>
@@ -43,31 +17,24 @@
 <body>
   <h1>Reservá tu Turno</h1>
   <form id="turnoForm">
-    <input type="text" name="nombre" placeholder="Tu nombre" required />
-    <input type="text" name="celular" placeholder="Tu celular" required />
-
+    <input type="text" name="nombre" placeholder="Tu nombre" required>
+    <input type="text" name="celular" placeholder="Tu celular" required>
     <select name="dia" id="diaSelect" required></select>
     <select name="hora" id="horaSelect" required></select>
-
     <button type="submit">Reservar Turno</button>
   </form>
   <p id="mensaje"></p>
 
   <script>
-    const form = document.getElementById("turnoForm");
-    const diaSelect = document.getElementById("diaSelect");
-    const horaSelect = document.getElementById("horaSelect");
-    const mensaje = document.getElementById("mensaje");
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzFIBDlqY56C67jke37PR2Fzwa2Gpr-Ajzgitx7zvlM-gXAKRDmhhLszvOygSRMbBtyKw/exec";
 
     const diasJulio = [
-      { texto: "Domingo 21/07", valor: "Domingo 21/07" },
       { texto: "Lunes 22/07", valor: "Lunes 22/07" },
       { texto: "Martes 23/07", valor: "Martes 23/07" },
       { texto: "Miércoles 24/07", valor: "Miércoles 24/07" },
       { texto: "Jueves 25/07", valor: "Jueves 25/07" },
       { texto: "Viernes 26/07", valor: "Viernes 26/07" },
       { texto: "Sábado 27/07", valor: "Sábado 27/07" },
-      { texto: "Domingo 28/07", valor: "Domingo 28/07" },
       { texto: "Lunes 29/07", valor: "Lunes 29/07" },
       { texto: "Martes 30/07", valor: "Martes 30/07" },
       { texto: "Miércoles 31/07", valor: "Miércoles 31/07" },
@@ -80,7 +47,6 @@
       "Jueves": generarHoras(6, 20),
       "Viernes": generarHoras(6, 20),
       "Sábado": generarHoras(8, 16),
-      "Domingo": [],
     };
 
     function generarHoras(inicio, fin) {
@@ -92,27 +58,51 @@
       return lista;
     }
 
-    diasJulio.forEach(obj => {
-      const opt = document.createElement("option");
-      opt.value = obj.valor;
-      opt.text = obj.texto;
-      diaSelect.appendChild(opt);
-    });
+    const diaSelect = document.getElementById("diaSelect");
+    const horaSelect = document.getElementById("horaSelect");
+    const mensaje = document.getElementById("mensaje");
+    const form = document.getElementById("turnoForm");
+
+    let turnosOcupados = [];
+
+    async function cargarOcupados() {
+      const res = await fetch(SCRIPT_URL);
+      turnosOcupados = await res.json();
+      actualizarDias();
+    }
+
+    function actualizarDias() {
+      diaSelect.innerHTML = "";
+      diasJulio.forEach(d => {
+        const opt = document.createElement("option");
+        opt.value = opt.text = d.valor;
+        diaSelect.appendChild(opt);
+      });
+      diaSelect.dispatchEvent(new Event("change"));
+    }
 
     diaSelect.addEventListener("change", () => {
       const diaTexto = diaSelect.value;
-      const diaNombre = diaTexto.split(" ")[0]; // "Lunes", "Martes", etc.
+      const diaNombre = diaTexto.split(" ")[0];
+      const disponibles = horasPorDia[diaNombre] || [];
+      const ocupados = turnosOcupados.filter(t => t.dia === diaTexto).map(t => t.hora);
+
       horaSelect.innerHTML = "";
-      if (horasPorDia[diaNombre]) {
-        horasPorDia[diaNombre].forEach(h => {
+      disponibles.forEach(h => {
+        if (!ocupados.includes(h)) {
           const opt = document.createElement("option");
           opt.value = opt.text = h;
           horaSelect.appendChild(opt);
-        });
+        }
+      });
+
+      if (horaSelect.options.length === 0) {
+        const opt = document.createElement("option");
+        opt.text = "Sin turnos disponibles";
+        opt.disabled = true;
+        horaSelect.appendChild(opt);
       }
     });
-
-    diaSelect.dispatchEvent(new Event("change"));
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -120,33 +110,29 @@
       const dia = data.dia;
       const hora = data.hora;
 
-      const res = await fetch(
-        "https://script.google.com/macros/s/AKfycbzFIBDlqY56C67jke37PR2Fzwa2Gpr-Ajzgitx7zvlM-gXAKRDmhhLszvOygSRMbBtyKw/exec",
-        {
-          method: "POST",
-          body: JSON.stringify(data),
-        }
-      );
+      const res = await fetch(SCRIPT_URL, {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
 
       const text = await res.text();
       if (text === "OK") {
         mensaje.textContent = "✅ Turno reservado con éxito";
         mensaje.className = "turno-ok";
-
-        // Redirección a WhatsApp
         const celular = "542235931151";
-        const mensajeWA = encodeURIComponent(
-          `Hola! Ya reservé mi turno para el ${dia} a las ${hora}.`
-        );
+        const mensajeWA = encodeURIComponent(`Hola! Ya reservé mi turno para el ${dia} a las ${hora}.`);
         window.location.href = `https://wa.me/${celular}?text=${mensajeWA}`;
       } else if (text === "DUPLICADO") {
         mensaje.textContent = "❌ Ese turno ya fue reservado";
         mensaje.className = "turno-error";
+        await cargarOcupados(); // volver a cargar turnos
       } else {
-        mensaje.textContent = "⚠️ Ocurrió un error al registrar el turno";
+        mensaje.textContent = "⚠️ Ocurrió un error inesperado";
         mensaje.className = "turno-error";
       }
     });
+
+    cargarOcupados();
   </script>
 </body>
 </html>
